@@ -18,3 +18,6 @@ impl SocketV4 {
         };
     }
 }
+
+#[cfg(feature = "user")]
+unsafe impl aya::Pod for SocketV4 {}
