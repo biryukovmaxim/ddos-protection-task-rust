@@ -84,7 +84,7 @@ fn try_ddos_protection_task(ctx: XdpContext) -> Result<u32, ()> {
         "syn from: {:ipv4}:{}, ACTION: {}", source.address, source.port, action
     );
 
-    Ok(xdp_action::XDP_PASS)
+    Ok(action)
 }
 
 #[panic_handler]
