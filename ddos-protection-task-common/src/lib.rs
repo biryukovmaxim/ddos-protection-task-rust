@@ -11,11 +11,11 @@ pub struct SocketV4 {
 impl SocketV4 {
     #[inline(always)]
     pub fn new(address: u32, port: u16) -> Self {
-        return SocketV4 {
+        SocketV4 {
             address,
             port,
             padding: 0,
-        };
+        }
     }
 }
 
