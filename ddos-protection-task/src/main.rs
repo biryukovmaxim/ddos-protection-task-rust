@@ -1,4 +1,5 @@
 use anyhow::Context;
+use aya::maps::MapRefMut;
 use aya::{
     include_bytes_aligned,
     maps::HashMap,
@@ -9,9 +10,10 @@ use aya_log::BpfLogger;
 use bytes::Bytes;
 use ddos_protection_task::{challenge::server::Processor, engine::Engine};
 use ddos_protection_task_common::SocketV4;
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 use std::net::SocketAddr;
-use std::sync::Arc;
+use std::net::SocketAddr::V4;
+use std::sync::{Arc, Mutex};
 use tokio::{
     io::AsyncWriteExt,
     net::{TcpListener, UdpSocket},
@@ -22,6 +24,7 @@ use tokio::{
 const IFACE: &str = "lo";
 const TCP_ADDR: Option<&'static str> = option_env!("TCP_ADDR");
 const UDP_ADDR: Option<&'static str> = option_env!("UDP_ADDR");
+const DIFFICULTY: Option<&'static str> = option_env!("DIFFICULTY");
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -48,14 +51,20 @@ async fn main() -> Result<(), anyhow::Error> {
         .unwrap()
         .try_into()?;
     program.load()?;
-    program.attach(&IFACE, XdpFlags::default())
+    program.attach(IFACE, XdpFlags::default())
         .context("failed to attach the XDP program with default flags - try changing XdpFlags::default() to XdpFlags::SKB_MODE")?;
-    let whitelist: HashMap<_, SocketV4, u32> = HashMap::try_from(bpf.map_mut("WHITELIST")?)?;
+    let tcp_whitelist: Arc<Mutex<HashMap<MapRefMut, SocketV4, u32>>> =
+        Arc::new(Mutex::new(HashMap::try_from(bpf.map_mut("WHITELIST")?)?));
+    let engine_whitelist = Arc::clone(&tcp_whitelist);
 
     let tcp_listen_addr = TCP_ADDR.unwrap_or("127.0.0.1:5051");
     let udp_listen_addr = UDP_ADDR.unwrap_or("127.0.0.1:1053");
-    let engine = Engine::<sha2::Sha256>::default();
-    let challenge_processor = Processor::new(engine);
+    let engine = Engine::<sha2::Sha256>::new(
+        DIFFICULTY.unwrap_or("22").parse().unwrap_or(22),
+        engine_whitelist,
+    );
+    let mut challenge_processor = Processor::new(engine);
+
     // TCP listener
     let tcp_listener = TcpListener::bind(tcp_listen_addr).await?;
     tokio::spawn(async move {
@@ -65,6 +74,15 @@ async fn main() -> Result<(), anyhow::Error> {
             debug!("Accepted connection from {:?}", socket_addr);
             if let Err(e) = socket.write_all(b"Hello World\n").await {
                 warn!("writing err: {:?}", e);
+            }
+            let V4(socket)= socket_addr  else {
+                continue
+            };
+            if let Err(e) = tcp_whitelist.lock().unwrap().remove(&SocketV4::new(
+                u32::from_be_bytes(socket.ip().octets()),
+                socket.port(),
+            )) {
+                error!("remove key error: {:?}", e);
             }
         }
     });
@@ -88,7 +106,7 @@ async fn main() -> Result<(), anyhow::Error> {
                     continue;
                 }
             };
-            udp_socket.send_to(&*resp.to_bytes(), &peer).await.unwrap();
+            udp_socket.send_to(&resp.to_bytes(), &peer).await.unwrap();
         }
     });
 

@@ -4,6 +4,7 @@ use aya::maps::{HashMap, MapRefMut};
 use dashmap::DashMap;
 use ddos_protection_task_common::SocketV4;
 use log::debug;
+use std::sync::Mutex;
 use std::{net::SocketAddrV4, sync::Arc};
 
 pub mod error;
@@ -11,7 +12,17 @@ pub mod error;
 pub struct Engine<D: digest::Digest> {
     difficulty: u32,
     challenges: Arc<DashMap<<Self as Interface>::UK, <Self as Interface>::Challenge>>,
-    whitelist: HashMap<MapRefMut, SocketV4, u32>,
+    whitelist: Arc<Mutex<HashMap<MapRefMut, SocketV4, u32>>>,
+}
+
+impl<D: digest::Digest> Engine<D> {
+    pub fn new(difficulty: u32, whitelist: Arc<Mutex<HashMap<MapRefMut, SocketV4, u32>>>) -> Self {
+        Self {
+            difficulty,
+            challenges: Arc::new(Default::default()),
+            whitelist,
+        }
+    }
 }
 
 impl<D: digest::Digest> Interface for Engine<D> {
@@ -42,7 +53,7 @@ impl<D: digest::Digest> Interface for Engine<D> {
 
         let success = hk.verify(hash, nonce, self.difficulty);
         if success {
-            self.whitelist.insert(
+            self.whitelist.lock().unwrap().insert(
                 SocketV4::new(u32::from_be_bytes(uniq_key.ip().octets()), uniq_key.port()),
                 1,
                 0,

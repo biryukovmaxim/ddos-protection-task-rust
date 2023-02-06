@@ -1,6 +1,6 @@
 use crate::challenge::error::ParseRequestErr;
-use bytes::{Buf, BufMut, Bytes, BytesMut};
-use std::io::{Read, Write};
+use bytes::{Buf, Bytes};
+use std::io::Read;
 use std::net::SocketAddrV4;
 
 pub mod error;
