@@ -1,7 +1,7 @@
 #![no_std]
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct SocketV4 {
     pub address: u32,
     pub port: u16,

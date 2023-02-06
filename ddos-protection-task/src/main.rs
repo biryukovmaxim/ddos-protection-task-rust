@@ -11,6 +11,7 @@ use ddos_protection_task::{challenge::server::Processor, engine::Engine};
 use ddos_protection_task_common::SocketV4;
 use log::{debug, info, warn};
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tokio::{
     io::AsyncWriteExt,
     net::{TcpListener, UdpSocket},
@@ -53,7 +54,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let tcp_listen_addr = TCP_ADDR.unwrap_or("127.0.0.1:5051");
     let udp_listen_addr = UDP_ADDR.unwrap_or("127.0.0.1:1053");
-    let engine = Engine {};
+    let engine = Engine::<sha2::Sha256>::default();
     let challenge_processor = Processor::new(engine);
     // TCP listener
     let tcp_listener = TcpListener::bind(tcp_listen_addr).await?;
