@@ -17,7 +17,8 @@ use tokio::{
     signal::unix::{signal, SignalKind},
 };
 
-const IFACE: &str = env!("IFACE");
+// const IFACE: &str = env!("IFACE");
+const IFACE: &str = "lo";
 const TCP_ADDR: Option<&'static str> = option_env!("TCP_ADDR");
 const UDP_ADDR: Option<&'static str> = option_env!("UDP_ADDR");
 

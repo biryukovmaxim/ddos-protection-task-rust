@@ -1,4 +1,4 @@
-use super::challenge::server::Engine as Interface;
+use crate::challenge::Engine as Interface;
 use std::fmt::{Debug, Display, Formatter};
 use std::net::SocketAddrV4;
 
@@ -19,7 +19,8 @@ impl Display for Error {
 
 impl std::error::Error for Error {}
 
-impl Interface<8> for Engine {
+impl Interface for Engine {
+    type Challenge = [u8; 8];
     type UK = SocketAddrV4;
     type Error = Error;
 

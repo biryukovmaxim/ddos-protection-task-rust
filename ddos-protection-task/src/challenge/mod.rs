@@ -64,8 +64,8 @@ enum ResponseType {
     Confirmation,
 }
 
-impl<UK, const CH: usize> From<&Response<CH, UK>> for ResponseType {
-    fn from(value: &Response<CH, UK>) -> Self {
+impl<T: AsRef<[u8]>, UK> From<&Response<T, UK>> for ResponseType {
+    fn from(value: &Response<T, UK>) -> Self {
         match value {
             Response::SendChallenge { .. } => Self::SendChallenge,
             Response::Confirmation(_) => Self::Confirmation,
@@ -74,15 +74,12 @@ impl<UK, const CH: usize> From<&Response<CH, UK>> for ResponseType {
 }
 
 #[derive(Debug, Clone)]
-pub enum Response<const CHALLENGE_SIZE: usize, UK> {
-    SendChallenge {
-        challenge: [u8; CHALLENGE_SIZE],
-        uniq_key: UK,
-    },
+pub enum Response<T: AsRef<[u8]>, UK> {
+    SendChallenge { challenge: T, uniq_key: UK },
     Confirmation(bool),
 }
 
-impl Response<8, SocketAddrV4> {
+impl<T: AsRef<[u8]>> Response<T, SocketAddrV4> {
     pub fn to_bytes(self) -> Bytes {
         let rt = ResponseType::from(&self);
 
@@ -97,7 +94,7 @@ impl Response<8, SocketAddrV4> {
                 combined_array[0] = rt as u8;
                 combined_array[..5].copy_from_slice(&uniq_key_bytes);
                 combined_array[5..7].copy_from_slice(&port_bytes);
-                combined_array[7..].copy_from_slice(&challenge);
+                combined_array[7..].copy_from_slice(challenge.as_ref());
 
                 Bytes::copy_from_slice(&combined_array)
             }
@@ -106,4 +103,19 @@ impl Response<8, SocketAddrV4> {
             }
         }
     }
+}
+
+pub trait Engine {
+    // // https://github.com/rust-lang/rust/issues/60551
+    // const CHALLENGE_SIZE: usize = 8;
+    type Challenge: AsRef<[u8]>;
+    type UK;
+    type Error: std::error::Error;
+    fn create_challenge(&self, uk: &Self::UK) -> Result<Self::Challenge, Self::Error>;
+    fn check_solution(
+        &self,
+        uk: &Self::UK,
+        hash: [u8; 32],
+        nonce: u64,
+    ) -> Result<bool, Self::Error>;
 }

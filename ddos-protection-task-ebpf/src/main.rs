@@ -18,7 +18,7 @@ use network_types::{
     tcp::TcpHdr,
 };
 
-static PORT: &'static str = env!("PORT");
+static PORT: Option<&'static str> = option_env!("PORT");
 
 #[map(name = "WHITELIST")]
 static mut WHITELIST: LruHashMap<SocketV4, u32> = LruHashMap::with_max_entries(1024, 0);
@@ -67,7 +67,7 @@ fn try_ddos_protection_task(ctx: XdpContext) -> Result<u32, ()> {
         return Ok(xdp_action::XDP_PASS);
     }
     let dst_port = u16::from_be(unsafe { (*tcphdr).dest });
-    if dst_port != u16::from_str(PORT).unwrap() {
+    if dst_port != u16::from_str(PORT.unwrap_or("5051")).unwrap() {
         return Ok(xdp_action::XDP_PASS);
     }
     let source_addr = u32::from_be(unsafe { (*ipv4hdr).src_addr });
