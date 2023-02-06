@@ -88,11 +88,11 @@ impl<T: AsRef<[u8]>> Response<T, SocketAddrV4> {
                 challenge,
                 uniq_key,
             } => {
-                let uniq_key_bytes = uniq_key.ip().octets();
+                let address_bytes = uniq_key.ip().octets();
                 let port_bytes: [u8; 2] = uniq_key.port().to_be_bytes();
                 let mut combined_array = [0; 1 + 4 + 2 + 8];
                 combined_array[0] = rt as u8;
-                combined_array[..5].copy_from_slice(&uniq_key_bytes);
+                combined_array[..5].copy_from_slice(&address_bytes);
                 combined_array[5..7].copy_from_slice(&port_bytes);
                 combined_array[7..].copy_from_slice(challenge.as_ref());
 
@@ -113,7 +113,7 @@ pub trait Engine {
     type Error: std::error::Error;
     fn create_challenge(&self, uk: &Self::UK) -> Result<Self::Challenge, Self::Error>;
     fn check_solution(
-        &self,
+        &mut self,
         uk: &Self::UK,
         hash: [u8; 32],
         nonce: u64,

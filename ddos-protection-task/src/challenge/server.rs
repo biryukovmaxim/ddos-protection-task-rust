@@ -10,7 +10,7 @@ impl<E: Engine> Processor<E> {
         Self { engine }
     }
     pub fn process(
-        &self,
+        &mut self,
         packet: Bytes,
         uniq_key: E::UK,
     ) -> Result<Response<E::Challenge, E::UK>, Error<E::Error>> {
