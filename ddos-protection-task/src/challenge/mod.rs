@@ -186,5 +186,9 @@ pub trait Resolver {
     type Challenge: AsRef<[u8]>;
     type UK;
     type Error: std::error::Error;
-    fn compute(challenge: Self::Challenge, uk: Self::UK) -> Result<([u8; 32], u64), Self::Error>;
+    fn compute(
+        &self,
+        challenge: Self::Challenge,
+        uk: Self::UK,
+    ) -> Result<([u8; 32], u64), Self::Error>;
 }

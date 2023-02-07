@@ -1,20 +1,11 @@
 use crate::challenge::error::ParseResponseErr;
-use crate::challenge::{Request, Resolver, Response};
+use crate::challenge::{Request, Response};
 use bytes::Bytes;
-use std::marker::PhantomData;
 use std::net::SocketAddrV4;
 
-pub struct Client<T: Resolver> {
-    resolver: PhantomData<T>,
-}
+pub struct Client {}
 
-impl<T: Resolver> Client<T> {
-    pub fn new() -> Self {
-        Self {
-            resolver: PhantomData,
-        }
-    }
-
+impl Client {
     pub fn challenge_request() -> Bytes {
         Request::Challenge.to_bytes()
     }

@@ -21,5 +21,9 @@ rand = "0.8.5"
 sha2 = "0.10.6"
 
 [[bin]]
-name = "ddos-protection-task"
-path = "src/main.rs"
+name = "server"
+path = "src/bin/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/bin/client.rs"
