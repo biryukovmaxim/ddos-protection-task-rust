@@ -17,8 +17,8 @@ impl TryFrom<u8> for RequestType {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x01 => Ok(RequestType::RequestChallenge),
-            0x02 => Ok(RequestType::Solution),
+            0 => Ok(RequestType::RequestChallenge),
+            1 => Ok(RequestType::Solution),
             _ => Err(ParseRequestErr::UnknownRequestType(value)),
         }
     }
@@ -92,7 +92,7 @@ impl<T: AsRef<[u8]>> Response<T, SocketAddrV4> {
                 let port_bytes: [u8; 2] = uniq_key.port().to_be_bytes();
                 let mut combined_array = [0; 1 + 4 + 2 + 8];
                 combined_array[0] = rt as u8;
-                combined_array[..5].copy_from_slice(&address_bytes);
+                combined_array[1..5].copy_from_slice(&address_bytes);
                 combined_array[5..7].copy_from_slice(&port_bytes);
                 combined_array[7..].copy_from_slice(challenge.as_ref());
 
