@@ -49,7 +49,7 @@ impl<D: digest::Digest> Interface for Engine<D> {
         let mut data = [0; 4 + 2];
         data[..4].copy_from_slice(&address_bytes);
         data[4..].copy_from_slice(&port_bytes);
-        let hk = Hashcash::<[u8; 6], sha2::Sha256>::new(data);
+        let hk = Hashcash::<[u8; 6], D>::new(data);
 
         let success = hk.verify(hash, nonce, self.difficulty);
         if success {
