@@ -5,4 +5,6 @@ use thiserror::Error;
 pub enum Error {
     #[error("bpf map error")]
     MapError(#[from] MapError),
+    #[error("challenge not found")]
+    ChallengeNotFound,
 }

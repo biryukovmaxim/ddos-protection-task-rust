@@ -18,7 +18,7 @@ impl TryFrom<u8> for RequestType {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(RequestType::RequestChallenge),
-            1 => Ok(RequestType::Solution),
+            2 => Ok(RequestType::Solution),
             _ => Err(ParseRequestErr::UnknownRequestType(value)),
         }
     }

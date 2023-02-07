@@ -44,12 +44,17 @@ impl<D: digest::Digest> Interface for Engine<D> {
         hash: [u8; 32],
         nonce: u64,
     ) -> Result<bool, Self::Error> {
+        let challenge = self
+            .challenges
+            .get(uniq_key)
+            .ok_or(error::Error::ChallengeNotFound)?;
         let address_bytes = uniq_key.ip().octets();
         let port_bytes: [u8; 2] = uniq_key.port().to_be_bytes();
-        let mut data = [0; 4 + 2];
-        data[..4].copy_from_slice(&address_bytes);
-        data[4..].copy_from_slice(&port_bytes);
-        let hk = Hashcash::<[u8; 6], D>::new(data);
+        let mut data = [0; 8 + 4 + 2];
+        data[0..8].copy_from_slice(challenge.as_ref());
+        data[8..12].copy_from_slice(&address_bytes);
+        data[12..].copy_from_slice(&port_bytes);
+        let hk = Hashcash::<[u8; 14], D>::new(data);
 
         let success = hk.verify(hash, nonce, self.difficulty);
         if success {

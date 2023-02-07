@@ -84,7 +84,9 @@ async fn main() -> Result<(), anyhow::Error> {
                 socket.port(),
             )) {
                 error!("remove key error: {:?}", e);
+                continue;
             }
+            debug!("removing key from whitelist {:?}", socket);
         }
     });
 
