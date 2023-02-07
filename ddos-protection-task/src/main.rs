@@ -11,9 +11,10 @@ use bytes::Bytes;
 use ddos_protection_task::{challenge::server::Processor, engine::Engine};
 use ddos_protection_task_common::SocketV4;
 use log::{debug, error, info, warn};
-use std::net::SocketAddr;
-use std::net::SocketAddr::V4;
-use std::sync::{Arc, Mutex};
+use std::{
+    net::SocketAddr::V4,
+    sync::{Arc, Mutex},
+};
 use tokio::{
     io::AsyncWriteExt,
     net::{TcpListener, UdpSocket},
@@ -96,7 +97,7 @@ async fn main() -> Result<(), anyhow::Error> {
         while let Ok((recv, peer)) = udp_socket.recv_from(&mut buf).await {
             let bytes = Bytes::copy_from_slice(&buf[..recv]);
             debug!("Received {} bytes from {:?}", recv, peer);
-            let SocketAddr::V4(peer) = peer else {
+            let V4(peer) = peer else {
                 continue;
             };
             let resp = match challenge_processor.process(bytes, peer) {
