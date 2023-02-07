@@ -17,3 +17,13 @@ pub enum ParseRequestErr {
     #[error("request format or length is wrong")]
     BadRequest,
 }
+
+#[derive(Error, Debug)]
+pub enum ParseResponseErr {
+    #[error("response type `{0}` is not known")]
+    UnknownResponseType(u8),
+    #[error("request is empty")]
+    EmptyResponse,
+    #[error("request format or length is wrong")]
+    BadResponse,
+}

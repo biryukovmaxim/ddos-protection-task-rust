@@ -1,6 +1,7 @@
 use crate::challenge::error::Error;
 use crate::challenge::{Engine, Request, Response};
 use bytes::Bytes;
+
 pub struct Processor<E> {
     engine: E,
 }
