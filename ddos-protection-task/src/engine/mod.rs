@@ -39,7 +39,7 @@ impl<D: digest::Digest> Interface for Engine<D> {
     }
 
     fn check_solution(
-        &mut self,
+        &self,
         uniq_key: &Self::UK,
         hash: [u8; 32],
         nonce: u64,

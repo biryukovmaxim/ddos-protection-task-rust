@@ -113,7 +113,7 @@ pub trait Engine {
     type Error: std::error::Error;
     fn create_challenge(&self, uk: &Self::UK) -> Result<Self::Challenge, Self::Error>;
     fn check_solution(
-        &mut self,
+        &self,
         uk: &Self::UK,
         hash: [u8; 32],
         nonce: u64,
