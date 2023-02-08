@@ -1,7 +1,6 @@
 use anyhow::Context;
 use aya::maps::MapRefMut;
 use aya::{
-    include_bytes_aligned,
     maps::HashMap,
     programs::{Xdp, XdpFlags},
     Bpf,
@@ -26,6 +25,7 @@ const IFACE: Option<&'static str> = option_env!("IFACE");
 const TCP_ADDR: Option<&'static str> = option_env!("TCP_ADDR");
 const UDP_ADDR: Option<&'static str> = option_env!("UDP_ADDR");
 const DIFFICULTY: Option<&'static str> = option_env!("DIFFICULTY");
+const EBPF_PATH: &'static str = env!("EBPF_PATH");
 
 const QUOTES: [&str; 35] = [
     "You create your own opportunities",
@@ -69,18 +69,7 @@ const QUOTES: [&str; 35] = [
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
 
-    // This will include your eBPF object file as raw bytes at compile-time and load it at
-    // runtime. This approach is recommended for most real-world use cases. If you would
-    // like to specify the eBPF program at runtime rather than at compile-time, you can
-    // reach for `Bpf::load_file` instead.
-    #[cfg(debug_assertions)]
-    let mut bpf = Bpf::load(include_bytes_aligned!(
-        "../../../target/bpfel-unknown-none/debug/ddos-protection-task"
-    ))?;
-    #[cfg(not(debug_assertions))]
-    let mut bpf = Bpf::load(include_bytes_aligned!(
-        "../../../target/bpfel-unknown-none/release/ddos-protection-task"
-    ))?;
+    let mut bpf = Bpf::load_file(EBPF_PATH)?;
     if let Err(e) = BpfLogger::init(&mut bpf) {
         // This can happen if you remove all log statements from your eBPF program.
         warn!("failed to initialize eBPF logger: {}", e);
