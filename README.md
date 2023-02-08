@@ -29,16 +29,16 @@ cargo xtask build-ebpf
 To perform a release build you can use the `--release` flag.
 You may also change the target architecture with the `--target` flag
 
-## Build Userspace
+## Build Server
 
 ```bash
-cargo build
+BPF_PATH=target/bpfel-unknown-none/release/ddos-protection-task cargo build --bin server
 ```
 
-## Run
+## Run release
 
 ```bash
-RUST_LOG=info cargo xtask run
+BPF_PATH=target/bpfel-unknown-none/release/ddos-protection-task RUST_LOG=info cargo xtask run
 ```
 
 # Run in docker(possible only after building ebpf)
