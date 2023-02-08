@@ -11,6 +11,7 @@ use bytes::Bytes;
 use ddos_protection_task::{challenge::server::Processor, engine::Engine};
 use ddos_protection_task_common::SocketV4;
 use log::{debug, error, info, warn};
+use rand::Rng;
 use std::{
     net::SocketAddr::V4,
     sync::{Arc, Mutex},
@@ -25,6 +26,44 @@ const IFACE: Option<&'static str> = option_env!("IFACE");
 const TCP_ADDR: Option<&'static str> = option_env!("TCP_ADDR");
 const UDP_ADDR: Option<&'static str> = option_env!("UDP_ADDR");
 const DIFFICULTY: Option<&'static str> = option_env!("DIFFICULTY");
+
+const QUOTES: [&str; 35] = [
+    "You create your own opportunities",
+    "Never break your promises",
+    "You are never as stuck as you think you are",
+    "Happiness is a choice",
+    "Habits develop into character",
+    "Be happy with who you are",
+    "Don’t seek happiness–create it",
+    "If you want to be happy, stop complaining",
+    "Asking for help is a sign of strength",
+    "Replace every negative thought with a positive one",
+    "Accept what is, let go of what was, have faith in what will be",
+    "A mind that is stretched by a new experience can never go back to what it was",
+    "If you are not willing to learn, no one can help you",
+    "Be confident enough to encourage confidence in others",
+    "Allow others to figure things out for themselves",
+    "Confidence is essential for a successful life",
+    "Admit your mistakes and don’t repeat them",
+    "Be kind to yourself and forgive yourself",
+    "Failures are lessons in progress",
+    "Make amends with those who have wronged you",
+    "Live your life on your terms",
+    "When you don’t know, don’t speak as if you do",
+    "Treat others the way you want to be treated",
+    "Think before you speak",
+    "Cultivate an attitude of gratitude",
+    "Life isn’t as serious as our minds make it out to be",
+    "Take risks and be bold",
+    "Remember that “no” is a complete sentence",
+    "Don’t feed yourself only on leftovers",
+    "Build on your strengths",
+    "Never doubt your instincts",
+    "FEAR doesn’t have to stand for Forget Everything and Run",
+    "Your attitude will influence your experience",
+    "View your life with gentle hindsight",
+    "This too shall pass",
+];
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -72,7 +111,12 @@ async fn main() -> Result<(), anyhow::Error> {
 
         while let Ok((mut socket, socket_addr)) = tcp_listener.accept().await {
             debug!("Accepted connection from {:?}", socket_addr);
-            if let Err(e) = socket.write_all(b"Hello World\n").await {
+            let idx: usize;
+            {
+                let mut rng = rand::thread_rng();
+                idx = rng.gen_range(0..QUOTES.len());
+            }
+            if let Err(e) = socket.write_all(QUOTES[idx].as_ref()).await {
                 warn!("writing err: {:?}", e);
             }
             let V4(socket)= socket_addr  else {
@@ -97,7 +141,6 @@ async fn main() -> Result<(), anyhow::Error> {
 
         while let Ok((recv, peer)) = udp_socket.recv_from(&mut buf).await {
             let bytes = Bytes::copy_from_slice(&buf[..recv]);
-            debug!("Received {} bytes from {:?}", recv, peer);
             let V4(peer) = peer else {
                 continue;
             };
