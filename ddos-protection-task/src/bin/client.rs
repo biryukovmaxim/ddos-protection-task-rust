@@ -1,14 +1,15 @@
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 
 use anyhow::anyhow;
 use bytes::Bytes;
-use ddos_protection_task::challenge::client::Client;
+use ddos_protection_task::challenge::helper::ClientHelper;
 use ddos_protection_task::challenge::{Resolver, Response};
 use ddos_protection_task::resolver::Resolver as ResolverImpl;
 use sha2::Sha256;
 use std::net::{SocketAddr, SocketAddrV4};
 use std::str::FromStr;
-use tokio::net::UdpSocket;
+use tokio::io::AsyncReadExt;
+use tokio::net::{TcpSocket, UdpSocket};
 
 const TCP_ADDR: Option<&'static str> = option_env!("TCP_ADDR");
 const UDP_ADDR: Option<&'static str> = option_env!("UDP_ADDR");
@@ -17,17 +18,18 @@ const DIFFICULTY: Option<&'static str> = option_env!("DIFFICULTY");
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     env_logger::init();
-    //
-    // let tcp_dest_addr = TCP_ADDR.unwrap_or("127.0.0.1:5051");
-    // //
-    // // socket.send(&data).await?;
-    // // let mut data = vec![0u8; MAX_DATAGRAM_SIZE];
-    // // let len = socket.recv(&mut data).await?;
-    // println!(
-    //     "Received {} bytes:\n{}",
-    //     len,
-    //     String::from_utf8_lossy(&data[..len])
-    // );
+
+    let from = udp_handshake().await?;
+    debug!("confirmation received");
+    let socket = TcpSocket::new_v4()?;
+    socket.bind(SocketAddr::from(from))?;
+    debug!("binding local address: {from}");
+    let remote = TCP_ADDR.unwrap_or("127.0.0.1:5051").parse()?;
+    let mut stream = socket.connect(remote).await?;
+    debug!("connect to remote: {remote}");
+    let mut data = [0u8; 1024];
+    let size = stream.read(&mut data).await?;
+    info!("received: {}", String::from_utf8_lossy(&data[..size]));
 
     Ok(())
 }
@@ -43,7 +45,10 @@ pub async fn udp_handshake() -> Result<SocketAddrV4, anyhow::Error> {
     socket.connect(&udp_challenge_addr).await?;
 
     // send challenge request
-    socket.send(Client::challenge_request().as_ref()).await?;
+    socket
+        .send(ClientHelper::challenge_request().as_ref())
+        .await?;
+    debug!("send challenge request");
 
     // get response including challenge
     let mut resp = [0u8; 15];
@@ -60,21 +65,22 @@ pub async fn udp_handshake() -> Result<SocketAddrV4, anyhow::Error> {
             _ => break,
         }
     }
-    let (challenge, uniq_key) = match Client::decode_response(Bytes::copy_from_slice(&resp))? {
+    let (challenge, uniq_key) = match ClientHelper::decode_response(Bytes::copy_from_slice(&resp))?
+    {
         Response::Confirmation(_) => return Err(anyhow!("unexpected response")),
         Response::SendChallenge {
             challenge,
             uniq_key,
         } => (challenge, uniq_key),
     };
-
+    debug!("receive challenge: {challenge:?}, uniq_key: {uniq_key:?}");
     // calculate solution
     let (hash, nonce) = resolver.compute(challenge, uniq_key)?;
     //send solution
     socket
-        .send(Client::solution_request(&hash, nonce).as_ref())
+        .send(ClientHelper::solution_request(&hash, nonce).as_ref())
         .await?;
-
+    debug!("send solution, hash: {hash:?}, nonce: {nonce}");
     // get confirmation
     let mut resp = [0u8; 2];
     loop {

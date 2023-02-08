@@ -3,8 +3,8 @@ use bytes::{Buf, Bytes};
 use std::io::Read;
 use std::net::{Ipv4Addr, SocketAddrV4};
 
-pub mod client;
 pub mod error;
+pub mod helper;
 pub mod server;
 
 #[derive(Debug, Clone, Copy)]
