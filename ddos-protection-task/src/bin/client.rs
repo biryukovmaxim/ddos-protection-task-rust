@@ -35,7 +35,7 @@ async fn main() -> Result<(), anyhow::Error> {
 }
 
 pub async fn udp_handshake() -> Result<SocketAddrV4, anyhow::Error> {
-    let resolver = ResolverImpl::<Sha256>::new(DIFFICULTY.unwrap_or("22").parse().unwrap_or(22));
+    let resolver = ResolverImpl::<Sha256>::new(DIFFICULTY.unwrap_or("19").parse().unwrap_or(19));
 
     let udp_challenge_addr = SocketAddr::from_str(UDP_ADDR.unwrap_or("127.0.0.1:1053"))?;
 

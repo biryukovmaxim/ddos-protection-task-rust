@@ -60,7 +60,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let tcp_listen_addr = TCP_ADDR.unwrap_or("127.0.0.1:5051");
     let udp_listen_addr = UDP_ADDR.unwrap_or("127.0.0.1:1053");
     let engine = Engine::<sha2::Sha256>::new(
-        DIFFICULTY.unwrap_or("22").parse().unwrap_or(22),
+        DIFFICULTY.unwrap_or("19").parse().unwrap_or(19),
         engine_whitelist,
     );
     let mut challenge_processor = Processor::new(engine);

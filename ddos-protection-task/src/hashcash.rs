@@ -1,4 +1,5 @@
 use digest::{Digest, Output};
+use log::debug;
 use std::marker::PhantomData;
 
 pub struct Hashcash<Data: AsRef<[u8]>, D: Digest> {
@@ -15,12 +16,14 @@ impl<Data: AsRef<[u8]>, D: Digest> Hashcash<Data, D> {
     }
 
     pub fn compute(&self, difficulty: u32) -> Option<(Output<D>, u64)> {
+        debug!("start computing");
         let mut nonce = 0u64;
         while nonce < u64::MAX {
             let mut digest = D::new_with_prefix(&self.data);
             digest.update(nonce.to_be_bytes());
             let hash = digest.finalize();
             if Self::check_difficulty(hash.as_slice(), difficulty) {
+                debug!("finish computing");
                 return Some((hash, nonce));
             }
             nonce += 1;
